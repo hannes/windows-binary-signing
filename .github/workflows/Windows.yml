@@ -26,7 +26,6 @@ jobs:
           echo "${{ secrets.SM_CLIENT_CERT_FILE_B64 }}" | base64 --decode > /d/Certificate_pkcs12.p12 
 
       - name: Set variables 
-        id: variables 
         shell: bash
 
         run: |
@@ -37,7 +36,6 @@ jobs:
           echo "SM_CLIENT_CERT_PASSWORD=${{ secrets.SM_CLIENT_CERT_PASSWORD }}" >> "$GITHUB_ENV" 
 
       - name: Install DigiCert Client tools from Github Custom Actions marketplace
-        id: Digicert Code Signing Snippet
         uses: digicert/ssm-code-signing@v1.0.0
 
 
