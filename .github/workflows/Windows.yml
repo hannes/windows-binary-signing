@@ -13,12 +13,38 @@ jobs:
     runs-on: windows-2019
     steps:
 
-      - name: Build
+      - name: Download
         shell: bash
         run: |
           curl -LOL https://github.com/duckdb/duckdb/releases/download/v1.2.0/duckdb_cli-windows-amd64.zip
           unzip duckdb_cli-windows-amd64.zip
-          ls duckdb
+          ls -la duckdb.exe
 
-      - name: Code signing with Software Trust Manager
+      - name: Set up certificate 
+        shell: bash 
+        run: |
+          echo "${{ secrets.SM_CLIENT_CERT_FILE_B64 }}" | base64 --decode > /d/Certificate_pkcs12.p12 
+
+      - name: Set variables 
+        id: variables 
+        shell: bash
+
+        run: |
+          echo "::set-output name=version::${GITHUB_REF#refs/tags/v}" 
+          echo "SM_HOST=${{ secrets.SM_HOST }}" >> "$GITHUB_ENV" 
+          echo "SM_API_KEY=${{ secrets.SM_API_KEY }}" >> "$GITHUB_ENV" 
+          echo "SM_CLIENT_CERT_FILE=D:\\Certificate_pkcs12.p12" >> "$GITHUB_ENV" 
+          echo "SM_CLIENT_CERT_PASSWORD=${{ secrets.SM_CLIENT_CERT_PASSWORD }}" >> "$GITHUB_ENV" 
+
+      - name: Install DigiCert Client tools from Github Custom Actions marketplace
+        id: Digicert Code Signing Snippet
         uses: digicert/ssm-code-signing@v1.0.0
+
+
+      - name: Signing using certificate fingerprint      
+        run: |
+           smctl sign --fingerprint ${{ secrets.SM_CODE_SIGNING_CERT_SHA1_HASH }} --input duckdb.exe --config-file C:\Users\RUNNER~1\AppData\Local\Temp\smtools-windows-x64\pkcs11properties.cfg
+
+        shell: cmd
+
+
