@@ -1,16 +1,11 @@
-name: Windows
 on:
   push:
-   
-env:
-  GH_TOKEN: ${{ secrets.GH_TOKEN }}
-  OVERRIDE_GIT_DESCRIBE: ${{ inputs.override_git_describe }}
+    branches: [main]
 
 jobs:
-  windows-sign:
-    # Builds binaries for windows_amd64
-    name: Windows (64 Bit)
-    runs-on: windows-2019
+  build-and-sign:
+    runs-on: windows-latest
+    name: Build app and sign files with Trusted Signing
     steps:
 
       - name: Download
@@ -20,29 +15,18 @@ jobs:
           unzip duckdb_cli-windows-amd64.zip
           ls -la duckdb.exe
 
-      - name: Set up certificate 
-        shell: bash 
-        run: |
-          echo "${{ secrets.SM_CLIENT_CERT_FILE_B64 }}" | base64 --decode > /d/Certificate_pkcs12.p12 
 
-      - name: Set variables 
-        shell: bash
-
-        run: |
-          echo "::set-output name=version::${GITHUB_REF#refs/tags/v}" 
-          echo "SM_HOST=${{ secrets.SM_HOST }}" >> "$GITHUB_ENV" 
-          echo "SM_API_KEY=${{ secrets.SM_API_KEY }}" >> "$GITHUB_ENV" 
-          echo "SM_CLIENT_CERT_FILE=D:\\Certificate_pkcs12.p12" >> "$GITHUB_ENV" 
-          echo "SM_CLIENT_CERT_PASSWORD=${{ secrets.SM_CLIENT_CERT_PASSWORD }}" >> "$GITHUB_ENV" 
-
-      - name: Install DigiCert Client tools from Github Custom Actions marketplace
-        uses: digicert/ssm-code-signing@v1.0.0
-
-
-      - name: Signing using certificate fingerprint      
-        run: |
-           smctl sign --fingerprint ${{ secrets.SM_CODE_SIGNING_CERT_SHA1_HASH }} --input duckdb.exe --config-file C:\Users\RUNNER~1\AppData\Local\Temp\smtools-windows-x64\pkcs11properties.cfg
-
-        shell: cmd
-
-
+      - name: Sign files with Trusted Signing
+        uses: azure/trusted-signing-action@v0
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          endpoint: https://eus.codesigning.azure.net/
+          trusted-signing-account-name: vscx-codesigning
+          certificate-profile-name: vscx-certificate-profile
+          files-folder: ${{ github.workspace }}
+          files-folder-filter: exe
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
