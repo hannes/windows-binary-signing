@@ -23,14 +23,13 @@ jobs:
           azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
           azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
           endpoint: https://eus.codesigning.azure.net/
-          trusted-signing-account-name: duckdb-signing-app-registration
+          trusted-signing-account-name: duckdb-signing-2
           certificate-profile-name: duckdb-certificate-profile
           files-folder: ${{ github.workspace }}
           files-folder-filter: exe
           file-digest: SHA256
           timestamp-rfc3161: http://timestamp.acs.microsoft.com
           timestamp-digest: SHA256
-
 
       - name: Deploy
         shell: bash
